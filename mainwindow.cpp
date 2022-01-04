@@ -57,17 +57,39 @@ QString MainWindow::startScreenCapture()
 
     QVariantMap optionMap;
     QString savePath = "";
-    QDBusMessage result = interface.call("Screenshot", objpath, appId, wdHandle, optionMap);
+    // QDBusMessage result = interface.call("Screenshot", objpath, appId, wdHandle, optionMap);
     // QDBusMessage(type=MethodReturn, service=":1.1038", signature="ua{sv}",
     // contents=(0, [Argument: a{sv} {"uri" = [Variant(QString): "file:///home/uthuqinghong/Pictures/Screenshot_20211230_172001.png"]}]) )
-    qInfo() << result;
-    if (result.type() == QDBusMessage::ReplyMessage)
+    // qInfo() << result;
+    // if (result.type() == QDBusMessage::ReplyMessage)
+    // {
+    //    // QDBusMessage的arguments不仅可以用来存储发送的参数，也用来存储返回值
+    //    QList<QVariant> outArgs = result.arguments();
+    //    QVariant data = outArgs.at(1);
+    //    // 注意这里&不能少
+    //    const QDBusArgument &dbusArgs = data.value<QDBusArgument>();
+    //    qInfo() << "QDBusArgument current type is" << dbusArgs.currentType();
+    //    dbusArgs.beginMap();
+    //    QString key;
+    //    QVariant val;
+    //    while (!dbusArgs.atEnd())
+    //    {
+    //        dbusArgs.beginMapEntry();
+    //        dbusArgs >> key >> val;
+    //        dbusArgs.endMapEntry();
+    //    }
+    //    dbusArgs.endMap();
+    //     qInfo() << val.toString();
+    //    savePath = val.toString();
+    // }
+
+    QDBusPendingReply<uint, QVariantMap> reply = interface.call("Screenshot", objpath, appId, wdHandle, optionMap);
+    reply.waitForFinished();
+    if (reply.isValid())
     {
-        // QDBusMessage的arguments不仅可以用来存储发送的参数，也用来存储返回值
-        QList<QVariant> outArgs = result.arguments();
-        QVariant data = outArgs.at(1);
-        // 注意这里&不能少
-        const QDBusArgument &dbusArgs = data.value<QDBusArgument>();
+        int retCode = reply.value();
+        QVariant retMsg = reply.argumentAt(1);
+        const QDBusArgument &dbusArgs = retMsg.value<QDBusArgument>();
         qInfo() << "QDBusArgument current type is" << dbusArgs.currentType();
         dbusArgs.beginMap();
         QString key;
@@ -79,17 +101,9 @@ QString MainWindow::startScreenCapture()
             dbusArgs.endMapEntry();
         }
         dbusArgs.endMap();
-        //qInfo() << val.toString();
+        qInfo() << val.toString();
         savePath = val.toString();
     }
-
-    // QDBusPendingReply<uint> reply = interface.call("Screenshot", objpath, appId, wdHandle, optionMap);
-    // reply.waitForFinished();
-    // if (reply.isValid())
-    // {
-    //     int ret = reply.value();
-    //     qInfo() << ret;
-    // }
     return savePath;
 }
 
